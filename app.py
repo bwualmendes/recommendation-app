@@ -1,26 +1,32 @@
 import streamlit as st
-import pickle
 import numpy as np
 import pandas as pd
 from scipy.sparse import csr_matrix
+from sklearn.neighbors import NearestNeighbors
 
 # =========================================
-# LOAD MODEL + DATA
+# LOAD DATA + TRAIN MODEL (NO .pkl)
 # =========================================
 @st.cache_resource
 def load_model_and_data():
-    # Load enriched dataset (WITH product names)
+    # Load dataset
     df = pd.read_csv('final_recommendation_dataset.csv')
 
     # Create user-item matrix
     user_item_matrix = df.pivot_table(
-        index='userId', columns='productId', values='rating'
+        index='userId',
+        columns='productId',
+        values='rating'
     ).fillna(0)
 
-    # Load trained model
-    model = pickle.load(open('recommendation_model.pkl', 'rb'))
+    # Train model inside app (🔥 FIXED)
+    matrix_sparse = csr_matrix(user_item_matrix.values)
+
+    model = NearestNeighbors(metric='cosine', algorithm='brute', n_neighbors=10)
+    model.fit(matrix_sparse)
 
     return df, user_item_matrix, model
+
 
 df, user_item_matrix, model = load_model_and_data()
 
